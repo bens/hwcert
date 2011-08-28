@@ -101,13 +101,13 @@ module RippleAdder
               refl 2ʷ bc bx by n
 
       №3 : ∀ bc bx n
-           → 2ʷ * (2 * bx + (1 * bc + 0)) + n
-           ≡ (2 ^ (1 + w) * bx) + (2ʷ * bc + n)
-      №3 bc bx val =
-        solve 4 (λ 2ʷ' bc' bx' val'
+           → 2ʷ * (2 * bc + (1 * bx + 0)) + n
+           ≡ (2 ^ (1 + w) * bc) + (2ʷ * bx + n)
+      №3 bx bc val =
+        solve 4 (λ 2ʷ' bx' bc' val'
                  → let 0' = con 0 in
-                   2ʷ' :* (bx' :+ (bx' :+ 0') :+ (bc' :+ 0' :+ 0')) :+ val'
-                := (2ʷ' :+ (2ʷ' :+ 0')) :* bx' :+ (2ʷ' :* bc' :+ val'))
+                   2ʷ' :* (bc' :+ (bc' :+ 0') :+ (bx' :+ 0' :+ 0')) :+ val'
+                := (2ʷ' :+ (2ʷ' :+ 0')) :* bc' :+ (2ʷ' :* bx' :+ val'))
               refl 2ʷ bc bx val
 
   add : ∀ {w m n c}
@@ -125,5 +125,5 @@ module RippleAdder
           = go (fullAdd x y c′) sum
     where
     go : ∀ {bx n} → Bits 2 bx → Bits w n → Bits (2 + w) (2 ^ w * bx + n)
-    go {._}{n} (_∷_ {m = bx} x (_∷_ {m = bc} c [])) xs
-      rewrite Lemma.№3 w bc bx n = x ∷ c ∷ xs
+    go {._}{n} (_∷_ {m = bc} c (_∷_ {m = bx} x [])) xs
+      rewrite Lemma.№3 w bc bx n = c ∷ x ∷ xs
