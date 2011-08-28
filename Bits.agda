@@ -1,6 +1,10 @@
-import Signal
-module Bits {Bit} (signals : Signal.Signals Bit) where
+{-# OPTIONS --universe-polymorphism #-}
 
+import Signals
+open import Data.Nat using (ℕ)
+module Bits {ℓ} {Bit : ℕ → Set ℓ} (signals : Signals.Signals Bit) where
+
+open import Level
 open import Algebra using (module CommutativeSemiring)
 open import Data.Nat using ( ℕ; zero; suc; _+_; _*_; _≤_; _<_; z≤n; s≤s
                            ; module ≤-Reasoning )
@@ -15,13 +19,13 @@ open import Relation.Binary.PropositionalEquality
 open import NatExtra as ℕ-E using (_^_)
 
 infixr 5 _∷_
-data Bits : ℕ → ℕ → Set where
+data Bits : ℕ → ℕ → Set ℓ where
   [] : Bits 0 0
   _∷_ : ∀ {w m n} (b : Bit m) (bs : Bits w n)
-      → Bits (suc w) (2 ^ w * m + n)
+        → Bits (suc w) (2 ^ w * m + n)
 
 private
-  module S = Signal.Signals signals
+  module S = Signals.Signals signals
   module ℕ-CSR = CommutativeSemiring commutativeSemiring
   open ≤-Reasoning
 
@@ -53,7 +57,7 @@ bounded (_∷_ {w}{m}{n} b bs) = let 2ʷ = 2 ^ w in
     ≡⟨ cong (_+_ 2ʷ) $ sym (proj₂ ℕ-CSR.+-identity 2ʷ) ⟩
         2 * 2ʷ ∎
 
--- Split out the most significant bit with some certificates
+-- Split out the most significant bit with a certificate
 split1 : ∀ {w val}
        → (xs : Bits (suc w) val)
        → ∃₂ λ m n → Bit m × Bits w n × (2 ^ w * m + n ≡ val)
