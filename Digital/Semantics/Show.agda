@@ -1,4 +1,6 @@
-module Semantics.Show where
+{-# OPTIONS --universe-polymorphism #-}
+
+module Digital.Semantics.Show where
 
 open import Data.Nat
 open import Data.Product
@@ -7,24 +9,23 @@ open import Data.Sum
 open import Function
 open import Relation.Binary.PropositionalEquality
 
-open import OpSpec
-open import Signal
+open import Digital.OpSpec
+open import Digital.Signals
 
-module ShowSignals where
+private
   data Var : ℕ → Set where
     var′ : ∀ {n} → (n≤1 : n ≤ 1) → String → Var n
 
-  private
-    snand : ∀ {m n} → Var m → Var n → Var (m b-nand n)
-    snand {m}{n} (var′ px x) (var′ py y) =
-      var′ (nand-bounded px py) $ "(" ++ x ++ " nand " ++ y ++ ")"
+  snand : ∀ {m n} → Var m → Var n → Var (m b-nand n)
+  snand {m}{n} (var′ px x) (var′ py y) =
+    var′ (nand-bounded px py) $ "(" ++ x ++ " nand " ++ y ++ ")"
 
-    sbind : ∀ {x} {a : Set} → Var x → (Var x → a) → a
-    sbind x f = f x
+  sbind : ∀ {x} {a : Set} → Var x → (Var x → a) → a
+  sbind x f = f x
 
-    sbounded : ∀ {n} → Var n → n ≡ 0 ⊎ n ≡ 1
-    sbounded (var′      z≤n  _) = inj₁ refl
-    sbounded (var′ (s≤s z≤n) _) = inj₂ refl
+  sbounded : ∀ {n} → Var n → n ≡ 0 ⊎ n ≡ 1
+  sbounded (var′      z≤n  _) = inj₁ refl
+  sbounded (var′ (s≤s z≤n) _) = inj₂ refl
 
   signals : Signals Var
   signals = record
@@ -35,11 +36,11 @@ module ShowSignals where
     ; bounded = sbounded
     }
 
-  show : ∀ {n} → Var n → String
-  show (var′ _ xs) = xs
+  showVar : ∀ {n} → Var n → String
+  showVar (var′ _ xs) = xs
 
-show : (∀ {S} → (s : Signals S) → ∃ S) → String
-show f = ShowSignals.show (proj₂ (f ShowSignals.signals))
+show : (∀ {ℓ} {S : ℕ → Set ℓ} (s : Signals S) → ∃ S) → String
+show f = showVar (proj₂ (f signals))
 
 private
   ex₀ : show (λ s → , Signals.O s) ≡ "O"

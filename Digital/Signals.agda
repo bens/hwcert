@@ -1,6 +1,6 @@
 {-# OPTIONS --universe-polymorphism #-}
 
-module Signals where
+module Digital.Signals where
 
 open import Level
 open import Data.Nat
@@ -9,7 +9,7 @@ open import Data.Sum
 open import Function
 open import Relation.Binary.PropositionalEquality
 
-open import OpSpec
+open import Digital.OpSpec
 
 record Signals {ℓ} (S : ℕ → Set ℓ) : Set (suc ℓ) where
   field

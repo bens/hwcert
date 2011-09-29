@@ -1,12 +1,12 @@
-module Semantics.Calc where
+module Digital.Semantics.Calc where
 
 open import Data.Nat
 open import Data.Product
 open import Data.Sum
 open import Relation.Binary.PropositionalEquality
 
-open import OpSpec
-open import Signal
+open import Digital.OpSpec
+open import Digital.Signals
 
 module CalcSignals where
   data CBit : ℕ → Set where

@@ -1,4 +1,4 @@
-module OpSpec where
+module Digital.OpSpec where
 
 open import Data.Nat using (ℕ; suc; zero; _≤_; s≤s; z≤n)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)

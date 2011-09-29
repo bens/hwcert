@@ -1,6 +1,6 @@
 {-# OPTIONS --universe-polymorphism #-}
 
-module Adders where
+module Digital.Adders where
 
 open import Data.Nat            using (ℕ; suc; _+_; _*_)
 open import Data.Nat.Properties using (module SemiringSolver)
@@ -10,19 +10,19 @@ open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; sym; subst)
 
 -- local
-import Bits hiding (bounded)
-open import NatExtra using (_^_)
-open import OpSpec
-open import Signals
+import Digital.Bits hiding (bounded)
+open import Digital.NatExtra using (_^_)
+open import Digital.OpSpec
+import Digital.Signals
 
 module HalfAdder
     {ℓ} {Bit : ℕ → Set ℓ}
-    {signals : Signals Bit}
-    (sigops : SigOps signals)
+    {signals : Digital.Signals.Signals Bit}
+    (sigops : Digital.Signals.SigOps signals)
     where
 
-  open Bits signals
-  open SigOps sigops
+  open Digital.Bits signals
+  open Digital.Signals.SigOps sigops
 
   implSpec = λ (m n : ℕ)
              → (m b-and n + (m b-and n + 0) + (m b-xor n + 0 + 0))
@@ -39,12 +39,12 @@ module HalfAdder
 
 module FullAdder
     {ℓ} {Bit : ℕ → Set ℓ}
-    {signals : Signals Bit}
-    (sigops : SigOps signals)
+    {signals : Digital.Signals.Signals Bit}
+    (sigops : Digital.Signals.SigOps signals)
     where
 
-  open Bits signals
-  open SigOps sigops
+  open Digital.Bits signals
+  open Digital.Signals.SigOps sigops
 
   implSpec = λ (m n o : ℕ)
              → (2 * ((m b-xor n) b-nand o) b-nand (m b-nand n))
@@ -69,41 +69,41 @@ module FullAdder
 
 module RippleAdder
     {ℓ} {Bit : ℕ → Set ℓ}
-    {signals : Signals Bit}
-    (sigops : SigOps signals)
+    {signals : Digital.Signals.Signals Bit}
+    (sigops : Digital.Signals.SigOps signals)
     where
 
-  open Bits      signals using (Bits; []; _∷_; split1)
-  open SigOps    sigops  using (bounded)
-  open FullAdder sigops  using () renaming (add to fullAdd)
+  open Digital.Bits           signals using (Bits; []; _∷_; split1)
+  open Digital.Signals.SigOps sigops  using (bounded)
+  open FullAdder              sigops  using () renaming (add to fullAdd)
 
   private
     module Lemma (w : ℕ) where
       open SemiringSolver using (solve; _:+_; _:*_; _:=_; con)
       2ʷ = 2 ^ w
 
-      №1 : ∀ bc bx by bxs bys
+      #1 : ∀ bc bx by bxs bys
            → (2ʷ * bx + bxs) + (2ʷ * by + bys) + bc
            ≡ 2ʷ * (bx + by) + (bxs + bys + bc)
-      №1 bc bx by bxs bys =
+      #1 bc bx by bxs bys =
         solve 6 (λ 2ʷ' bx' bxs' by' bys' bc'
                 → 2ʷ' :* bx' :+ bxs' :+ (2ʷ' :* by' :+ bys') :+ bc'
                := 2ʷ' :* (bx' :+ by') :+ (bxs' :+ bys' :+ bc'))
               refl 2ʷ bx bxs by bys bc
 
-      №2 : ∀ bc bx by n
+      #2 : ∀ bc bx by n
            → 2ʷ * (bx + by) + (2ʷ * bc + n)
            ≡ 2ʷ * (bx + by + bc) + n
-      №2 bc bx by n =
+      #2 bc bx by n =
         solve 5 (λ 2ʷ' bc' bx' by' n'
                  → 2ʷ' :* (bx' :+ by') :+ (2ʷ' :* bc' :+ n')
                 := 2ʷ' :* (bx' :+ by' :+ bc') :+ n')
               refl 2ʷ bc bx by n
 
-      №3 : ∀ bc bx n
+      #3 : ∀ bc bx n
            → 2ʷ * (2 * bc + (1 * bx + 0)) + n
            ≡ (2 ^ (1 + w) * bc) + (2ʷ * bx + n)
-      №3 bx bc val =
+      #3 bx bc val =
         solve 4 (λ 2ʷ' bx' bc' val'
                  → let 0' = con 0 in
                    2ʷ' :* (bc' :+ (bc' :+ 0') :+ (bx' :+ 0' :+ 0')) :+ val'
@@ -119,11 +119,11 @@ module RippleAdder
       (_∷_ {.w} {bx} {bxs} x xs) (_∷_ {.w} {by} {bys} y ys) c
        with split1 (add xs ys c)
   ... | bc′ , bsum , c′ , sum , prf
-    rewrite Lemma.№1 w bc bx by bxs bys
+    rewrite Lemma.#1 w bc bx by bxs bys
           | sym prf
-          | Lemma.№2 w bc′ bx by bsum
+          | Lemma.#2 w bc′ bx by bsum
           = go (fullAdd x y c′) sum
     where
     go : ∀ {bx n} → Bits 2 bx → Bits w n → Bits (2 + w) (2 ^ w * bx + n)
     go {._}{n} (_∷_ {m = bc} c (_∷_ {m = bx} x [])) xs
-      rewrite Lemma.№3 w bc bx n = c ∷ x ∷ xs
+      rewrite Lemma.#3 w bc bx n = c ∷ x ∷ xs

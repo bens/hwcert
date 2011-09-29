@@ -1,4 +1,4 @@
-module NatExtra where
+module Digital.NatExtra where
 
 open import Algebra
 open import Data.Nat as N

@@ -1,22 +1,23 @@
 {-# OPTIONS --universe-polymorphism #-}
 
-import Signals
+open import Digital.Signals using (Signals)
 open import Data.Nat using (ℕ)
-module Bits {ℓ} {Bit : ℕ → Set ℓ} (signals : Signals.Signals Bit) where
+module Digital.Bits {ℓ} {Bit : ℕ → Set ℓ} (signals : Signals Bit) where
 
 open import Level
 open import Algebra using (module CommutativeSemiring)
 open import Data.Nat using ( ℕ; zero; suc; _+_; _*_; _≤_; _<_; z≤n; s≤s
-                           ; module ≤-Reasoning )
+                           ; module ≤-Reasoning
+                           ; _∸_ )
 open import Data.Nat.Properties using (commutativeSemiring; _+-mono_)
-open import Data.Product using (∃₂; _×_; _,_; proj₁; proj₂)
+open import Data.Product using (∃; ∃₂; _×_; _,_; proj₁; proj₂)
 open import Data.Sum using (inj₁; inj₂)
 open import Function using (_$_; flip)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; sym; trans; cong; subst; subst₂)
 
 -- local
-open import NatExtra as ℕ-E using (_^_)
+open import Digital.NatExtra as ℕ-E using (_^_)
 
 infixr 5 _∷_
 data Bits : ℕ → ℕ → Set ℓ where
@@ -25,7 +26,7 @@ data Bits : ℕ → ℕ → Set ℓ where
         → Bits (suc w) (2 ^ w * m + n)
 
 private
-  module S = Signals.Signals signals
+  module S = Digital.Signals.Signals signals
   module ℕ-CSR = CommutativeSemiring commutativeSemiring
   open ≤-Reasoning
 
