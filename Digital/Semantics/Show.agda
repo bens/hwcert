@@ -5,30 +5,25 @@ module Digital.Semantics.Show where
 open import Algebra using (module CommutativeSemiring)
 open import Category.Monad.State
   using (State; module RawIMonadState; StateMonadState)
-open import Data.Bool using (true; false)
-open import Data.Fin using (Fin; zero; suc)
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_; z≤n; s≤s)
+open import Data.Bool           using (true; false)
+open import Data.Nat            using (ℕ; suc; _+_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties using (commutativeSemiring)
-open import Data.Nat.Show using () renaming (show to ℕ-show)
-open import Data.Product using (Σ; ∃; ∃₂; _×_; _,_; proj₁; proj₂)
-open import Data.String renaming (_++_ to _S++_)
-open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Unit using (⊤; tt)
-open import Data.Vec
-  using (Vec; _∷_; []; map; splitAt; lookup)
-  renaming (_++_ to _V++_)
-open import Function
-open import Relation.Binary using (module DecTotalOrder)
+open import Data.Nat.Show       using () renaming (show to ℕ-show)
+open import Data.Product        using (_,_; proj₁)
+open import Data.String         using (String; _++_; _==_)
+open import Data.Sum            using (_⊎_; inj₁; inj₂)
+open import Function            using (_$_; _∘_; flip; id)
 open import Relation.Binary.PropositionalEquality
-open import Relation.Binary.PropositionalEquality.TrustMe
+  using (_≡_; refl; cong; subst)
+
 open import Digital.Bits
 open import Digital.Signature
-
 open import Digital.OpSpec
 open import Digital.Signals
 open import Digital.NatExtra as ℕ-E using (_^_)
 
 open CommutativeSemiring commutativeSemiring using (+-comm; *-comm)
+open RawIMonadState (StateMonadState ℕ)
 
 private
   data Var : ℕ → Set where
@@ -36,7 +31,7 @@ private
 
   snand : ∀ {m n} → Var m → Var n → Var (m b-nand n)
   snand {m}{n} (var′ px x) (var′ py y) =
-    var′ (nand-bounded px py) $ "(" S++ x S++ " nand " S++ y S++ ")"
+    var′ (nand-bounded px py) $ "(" ++ x ++ " nand " ++ y ++ ")"
 
   sbind : ∀ {ni no}
         → (ti : Ty ni) (ixi : IX⟦ ti ⟧)
@@ -67,20 +62,18 @@ private
     go ss [] = ss
     go ss (b ∷ bs) with ss == ""
     ... | true  = go (showVar b) bs
-    ... | false = go (ss S++ ":" S++ showVar b) bs
+    ... | false = go (ss ++ ":" ++ showVar b) bs
 
   showT : ∀ {n} → (ty : Ty n) {ix : IX⟦ ty ⟧} → T⟦ Var ∣ ty ∶ ix ⟧ → String
   showT  bit x     = showVar x
   showT (bits w) x = showBits x
-  showT (t t+ u) (x , y) = showT t x S++ ", " S++ showT u y
-
-  open RawIMonadState (StateMonadState ℕ)
+  showT (t t+ u) (x , y) = showT t x ++ ", " ++ showT u y
 
   nextI : State ℕ ℕ
   nextI = get >>= λ i → put (1 + i) >> return i
 
   genVars : ∀ {n} (ty : Ty n) → State ℕ T⟦ Var ∣ ty ∶ ixZero ty ⟧
-  genVars  bit     = nextI >>= λ i → return $ var′ z≤n ("b" S++ ℕ-show i)
+  genVars  bit     = nextI >>= λ i → return $ var′ z≤n ("b" ++ ℕ-show i)
   genVars (bits 0) = return []
   genVars (bits (suc w)) =
     let open Signals signals
@@ -88,7 +81,7 @@ private
     in genVars (bits w) >>= λ vs →
        nextI            >>= λ i →
        return $ subst (Bits Var (suc w)) lemma
-                      (var′ z≤n ("bs" S++ ℕ-show i) ∷ vs)
+                      (var′ z≤n ("bs" ++ ℕ-show i) ∷ vs)
   genVars (x t+ y) =
     genVars x >>= λ tx → genVars y >>= λ ty → return (tx , ty)
 
@@ -103,9 +96,6 @@ show x y _ f = showT y ∘ f signals ∘ proj₁ $ genVars x 0
 private
   test₀ : show bit bit id (λ s → id) ≡ "b0"
   test₀ = refl
-
-  test₁-ty : Vec ℕ 1 → Vec ℕ 1
-  test₁-ty (x ∷ []) = defNot x ∷ []
 
   test₁ : show bit bit defNot (λ s x → let open Signals s in x nand x)
           ≡ "(b0 nand b0)"
