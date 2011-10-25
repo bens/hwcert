@@ -1,13 +1,10 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 module Main where
 
-open import Level
-open import Data.Nat
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
-open import Data.String using (_++_)
-open import Data.Unit using (⊤; tt)
-open import IO using (IO; putStrLn; run)
+open import Data.Nat     using (ℕ; _+_)
+open import Data.Product using (_,_; _×_; proj₁; proj₂; uncurry)
+open import Data.String  using (_++_)
+open import Data.Unit    using (⊤)
+open import IO           using (IO; putStrLn; run)
 open import IO.Primitive using () renaming (IO to PrimIO)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
@@ -23,7 +20,7 @@ circuit : ∀ {S : ℕ → Set} (s : Signals S)
         → Bits S 2 (proj₁ n + proj₂ n)
 circuit s (x , y) = HalfAdder.add s (defaultSigOps s) x y
 
-test : show (bit t+ bit) (bits 2) (λ n → proj₁ n + proj₂ n) circuit
+test : show (bit t+ bit) (bits 2) (uncurry _+_) circuit
        ≡ "((b0 nand b1) nand (b0 nand b1)):" ++
          "((b0 nand (b0 nand b1)) nand (b1 nand (b0 nand b1)))"
 test = refl
