@@ -1,5 +1,3 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 module Digital.Semantics.Show where
 
 open import Algebra using (module CommutativeSemiring)

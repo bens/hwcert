@@ -1,5 +1,3 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 module Digital.Signals where
 
 open import Level

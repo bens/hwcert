@@ -1,5 +1,3 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 open import Data.Nat using (ℕ)
 open import Digital.Signals using (Signals)
 

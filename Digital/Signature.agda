@@ -1,5 +1,3 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 open import Data.Nat
 
 module Digital.Signature where

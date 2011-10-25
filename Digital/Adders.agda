@@ -1,5 +1,3 @@
-{-# OPTIONS --universe-polymorphism #-}
-
 module Digital.Adders where
 
 open import Data.Nat            using (ℕ; suc; _+_; _*_)
