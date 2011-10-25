@@ -95,8 +95,8 @@ private
 show : ∀ {ni no}
      → (ti : Ty ni) (to : Ty no)
      → (ixFn : IX⟦ ti ⟧ → IX⟦ to ⟧)
-     → (∀ {S : ℕ → Set} (s : Signals S) {ii : IX⟦ ti ⟧}
-        → S⟦ S ∣ ti ∶ ii ↦ to ∶ ixFn ii ⟧)
+     → (∀ {S : ℕ → Set} (s : Signals S) {ix : IX⟦ ti ⟧}
+        → S⟦ S ∣ ti ∶ ix ↦ to ∶ ixFn ix ⟧)
      → String
 show x y _ f = showT y ∘ f signals ∘ proj₁ $ genVars x 0
 
