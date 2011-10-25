@@ -74,23 +74,23 @@ private
   showT (bits w) x = showBits x
   showT (t t+ u) (x , y) = showT t x S++ ", " S++ showT u y
 
-open RawIMonadState (StateMonadState ℕ)
+  open RawIMonadState (StateMonadState ℕ)
 
-nextI : State ℕ ℕ
-nextI = get >>= λ i → put (1 + i) >> return i
+  nextI : State ℕ ℕ
+  nextI = get >>= λ i → put (1 + i) >> return i
 
-genVars : ∀ {n} (ty : Ty n) → State ℕ T⟦ Var ∣ ty ∶ ixZero ty ⟧
-genVars  bit     = nextI >>= λ i → return $ var′ z≤n ("b" S++ ℕ-show i)
-genVars (bits 0) = return []
-genVars (bits (suc w)) =
-  let open Signals signals
-      lemma = cong (flip _+_ 0) $ *-comm (2 ^ w) 0
-  in genVars (bits w) >>= λ vs →
-     nextI            >>= λ i →
-     return $ subst (Bits Var (suc w)) lemma
-                    (var′ z≤n ("bs" S++ ℕ-show i) ∷ vs)
-genVars (x t+ y) =
-  genVars x >>= λ tx → genVars y >>= λ ty → return (tx , ty)
+  genVars : ∀ {n} (ty : Ty n) → State ℕ T⟦ Var ∣ ty ∶ ixZero ty ⟧
+  genVars  bit     = nextI >>= λ i → return $ var′ z≤n ("b" S++ ℕ-show i)
+  genVars (bits 0) = return []
+  genVars (bits (suc w)) =
+    let open Signals signals
+        lemma = cong (flip _+_ 0) $ *-comm (2 ^ w) 0
+    in genVars (bits w) >>= λ vs →
+       nextI            >>= λ i →
+       return $ subst (Bits Var (suc w)) lemma
+                      (var′ z≤n ("bs" S++ ℕ-show i) ∷ vs)
+  genVars (x t+ y) =
+    genVars x >>= λ tx → genVars y >>= λ ty → return (tx , ty)
 
 show : ∀ {ni no}
      → (ti : Ty ni) (to : Ty no)
