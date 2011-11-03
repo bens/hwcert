@@ -25,33 +25,35 @@ open RawIMonadState (StateMonadState ℕ)
 
 private
   data Var : ℕ → Set where
-    var′ : ∀ {n} → (n≤1 : n ≤ 1) → String → Var n
+    var : ∀ {n} → (n≤1 : n ≤ 1) → String → Var n
 
   snand : ∀ {m n} → Var m → Var n → Var (m b-nand n)
-  snand {m}{n} (var′ px x) (var′ py y) =
-    var′ (nand-bounded px py) $ "(" ++ x ++ " nand " ++ y ++ ")"
+  snand {m}{n} (var px x) (var py y) =
+    var (nand-bounded px py) $ "(" ++ x ++ " nand " ++ y ++ ")"
 
   sbind : ∀ {ni no}
         → (ti : Ty ni) (ixi : IX⟦ ti ⟧)
         → (to : Ty no) (ixo : IX⟦ to ⟧)
-        → T⟦ Var ∣ ti ∶ ixi ⟧ → S⟦ Var ∣ ti ∶ _ ↦ to ∶ _ ⟧ → T⟦ Var ∣ to ∶ ixo ⟧
+        → T⟦ Var ∣ ti ∶ ixi ⟧
+        → S⟦ Var ∣ ti ∶ ixi ↦ to ∶ ixo ⟧
+        → T⟦ Var ∣ to ∶ ixo ⟧
   sbind _ _ _ _ x f = f x
 
   sbounded : ∀ {n} → Var n → n ≡ 0 ⊎ n ≡ 1
-  sbounded (var′      z≤n  _) = inj₁ refl
-  sbounded (var′ (s≤s z≤n) _) = inj₂ refl
+  sbounded (var      z≤n  _) = inj₁ refl
+  sbounded (var (s≤s z≤n) _) = inj₂ refl
 
   signals : Signals Var
   signals = record
     { _nand_  = snand
     ; bind    = sbind
-    ; O       = var′ z≤n "O"
-    ; I       = var′ (s≤s z≤n) "I"
+    ; O       = var z≤n "O"
+    ; I       = var (s≤s z≤n) "I"
     ; bounded = sbounded
     }
 
   showVar : ∀ {n} → Var n → String
-  showVar (var′ _ xs) = xs
+  showVar (var _ xs) = xs
 
   showBits : ∀ {w n} → Bits Var w n → String
   showBits = go ""
@@ -63,15 +65,15 @@ private
     ... | false = go (ss ++ ":" ++ showVar b) bs
 
   showT : ∀ {n} → (ty : Ty n) {ix : IX⟦ ty ⟧} → T⟦ Var ∣ ty ∶ ix ⟧ → String
-  showT  bit x     = showVar x
-  showT (bits w) x = showBits x
+  showT  bit x           = showVar x
+  showT (bits w) x       = showBits x
   showT (t t+ u) (x , y) = showT t x ++ ", " ++ showT u y
 
   nextI : State ℕ ℕ
   nextI = get >>= λ i → put (1 + i) >> return i
 
   genVars : ∀ {n} (ty : Ty n) → State ℕ T⟦ Var ∣ ty ∶ ixZero ty ⟧
-  genVars  bit     = nextI >>= λ i → return $ var′ z≤n ("b" ++ ℕ-show i)
+  genVars  bit     = nextI >>= λ i → return $ var z≤n ("b" ++ ℕ-show i)
   genVars (bits 0) = return []
   genVars (bits (suc w)) =
     let open Signals signals
@@ -79,7 +81,7 @@ private
     in genVars (bits w) >>= λ vs →
        nextI            >>= λ i →
        return $ subst (Bits Var (suc w)) lemma
-                      (var′ z≤n ("bs" ++ ℕ-show i) ∷ vs)
+                      (var z≤n ("bs" ++ ℕ-show i) ∷ vs)
   genVars (x t+ y) =
     genVars x >>= λ tx → genVars y >>= λ ty → return (tx , ty)
 
