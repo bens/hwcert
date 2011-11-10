@@ -99,29 +99,6 @@ module Bits where
                      := con 1 :+ (con 1 :+ (n' :+ n')))
               refl n
 
-  {-
-  repr : ∀ {w} n {n<2ʷ : n < 2 ^ w} → Bits w n
-  repr {w} n {n<2ʷ}
-    = go w n (DTO.reflexive refl) (DTO.reflexive refl) $
-         subst₂ Bits (ℕ-E.0≡n∸n w) (ℕ-E.0≡n∸n n) []
-    where
-    go : ∀ u m → u ≤ w → m ≤ n → Bits (w ∸ u) (n ∸ m) → Bits w n
-    go   zero zero z≤n z≤n bs = bs
-    go (suc u) zero u<w z≤n bs =
-      let lemma₁ = ℕ-E.sn∸sm≡n∸m u<w
-          lemma₂ = cong (flip _+_ n) $ CS.*-comm (2 ^ (w ∸ suc u)) 0
-      in go u 0 (ℕ-E.≤-step′ u<w) z≤n $
-            subst₂ Bits lemma₁ lemma₂ (O ∷ bs)
-    go   zero (suc m) z≤n m<n bs = {!!}
-    go (suc u) (suc m) u<w m<n bs with incr bs
-    ... | inj₁ bs′
-      = go (suc u) m u<w (ℕ-E.≤-step′ m<n) $
-           subst₂ Bits refl (ℕ-E.sn∸sm≡n∸m m<n) bs′
-    ... | inj₂ (bs′ , _)
-      = go u m (ℕ-E.≤-step′ u<w) (ℕ-E.≤-step′ m<n) $
-           subst₂ Bits (ℕ-E.sn∸sm≡n∸m u<w) (ℕ-E.sn∸sm≡n∸m m<n) bs′
-  -}
-
   repr : ∀ n → Σ[ w ∶ ℕ ] Bits w n
   repr n = go n (DTO.reflexive refl) (subst (Bits 0) (ℕ-E.0≡n∸n n) [])
     where
