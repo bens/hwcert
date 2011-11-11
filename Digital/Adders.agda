@@ -7,9 +7,8 @@ open import Data.Sum            using (inj₁; inj₂)
 open import Data.Vec            using (_∷_; [])
 open import Function            using (_$_)
 open import Relation.Binary.PropositionalEquality
-  using (_≡_; refl; sym; subst)
+  using (_≡_; refl; cong; sym; subst; module ≡-Reasoning)
 
--- local
 import Digital.Bits
 import Digital.Bits.Properties
 open import Digital.NatExtra using (_^_)
@@ -98,48 +97,59 @@ module RippleAdder
       open SemiringSolver using (solve; _:+_; _:*_; _:=_; con)
       2ʷ = 2 ^ w
 
-      #1 : ∀ bc bx by bxs bys
-           → (2ʷ * bx + bxs) + (2ʷ * by + bys) + bc
-           ≡ 2ʷ * (bx + by) + (bxs + bys + bc)
-      #1 bc bx by bxs bys =
-        solve 6 (λ 2ʷ' bx' bxs' by' bys' bc'
-                 → 2ʷ' :* bx' :+ bxs' :+ (2ʷ' :* by' :+ bys') :+ bc'
-                := 2ʷ' :* (bx' :+ by') :+ (bxs' :+ bys' :+ bc'))
-              refl 2ʷ bx bxs by bys bc
-
-      #2 : ∀ bc bx by n
-           → 2ʷ * (bx + by) + (2ʷ * bc + n)
-           ≡ 2ʷ * (bx + by + bc) + n
-      #2 bc bx by n =
+      #1 : ∀ bc bx by n
+           → 2ʷ * (bx + by + bc) + n
+           ≡ 2ʷ * (bx + by) + (2ʷ * bc + n)
+      #1 bc bx by n =
         solve 5 (λ 2ʷ' bc' bx' by' n'
-                 → 2ʷ' :* (bx' :+ by') :+ (2ʷ' :* bc' :+ n')
-                := 2ʷ' :* (bx' :+ by' :+ bc') :+ n')
+                 → 2ʷ' :* (bx' :+ by' :+ bc') :+ n'
+                := 2ʷ' :* (bx' :+ by') :+ (2ʷ' :* bc' :+ n'))
               refl 2ʷ bc bx by n
 
+      #2 : ∀ bc bx by bxs bys
+           → 2ʷ * (bx + by) + (bxs + bys + bc)
+           ≡ (2ʷ * bx + bxs) + (2ʷ * by + bys) + bc
+      #2 bc bx by bxs bys =
+        solve 6 (λ 2ʷ' bx' bxs' by' bys' bc'
+                 → 2ʷ' :* (bx' :+ by') :+ (bxs' :+ bys' :+ bc')
+                := 2ʷ' :* bx' :+ bxs' :+ (2ʷ' :* by' :+ bys') :+ bc')
+              refl 2ʷ bx bxs by bys bc
+
       #3 : ∀ bc bx n
-           → 2ʷ * (2 * bc + (1 * bx + 0)) + n
-           ≡ (2 ^ (1 + w) * bc) + (2ʷ * bx + n)
+           → (2 ^ (1 + w) * bc) + (2ʷ * bx + n)
+           ≡ 2ʷ * (2 * bc + (1 * bx + 0)) + n
       #3 bx bc val =
         solve 4 (λ 2ʷ' bx' bc' val'
                  → let 0' = con 0 in
-                   2ʷ' :* (bc' :+ (bc' :+ 0') :+ (bx' :+ 0' :+ 0')) :+ val'
-                := (2ʷ' :+ (2ʷ' :+ 0')) :* bc' :+ (2ʷ' :* bx' :+ val'))
+                   (2ʷ' :+ (2ʷ' :+ 0')) :* bc' :+ (2ʷ' :* bx' :+ val')
+                := 2ʷ' :* (bc' :+ (bc' :+ 0') :+ (bx' :+ 0' :+ 0')) :+ val')
               refl 2ʷ bc bx val
 
-  add : ∀ {w m n c}
-        → Bits w m → Bits w n → Bit c → Bits (suc w) (m + n + c)
+  add : {w m n : ℕ}
+      → Bits w m → Bits w n
+      → {c : ℕ} → Bit c
+      → Bits (suc w) (m + n + c)
   add {.0} [] [] c with bounded c
-  add {.0} [] [] c    | inj₁ refl = c ∷ []
-  add {.0} [] [] c    | inj₂ refl = c ∷ []
-  add {suc w} {c = bc}
-      (_∷_ {.w} {bx} {bxs} x xs) (_∷_ {.w} {by} {bys} y ys) c
-       with split1 (add xs ys c)
-  ... | bc′ , bsum , c′ , sum , prf
-    rewrite Lemma.#1 w bc bx by bxs bys
-          | sym prf
-          | Lemma.#2 w bc′ bx by bsum
-          = go (FullAdder.add signals sigops x y c′) sum
+  add {.0} [] [] c | inj₁ refl = c ∷ []
+  add {.0} [] [] c | inj₂ refl = c ∷ []
+  add {suc w} (_∷_ {.w} x xs) (y ∷ ys) c with split1 (add xs ys c)
+  add {suc w} (_∷_ {.w} {bx} {bxs} x xs) (_∷_ {.w} {by} {bys} y ys) {bc} c
+    | bc′ , bsum , c′ , sum , prf
+    = subst (Bits (2 + w)) main-proof $
+        go (FullAdder.add signals sigops x y c′) sum
     where
-    go : ∀ {bx n} → Bits 2 bx → Bits w n → Bits (2 + w) (2 ^ w * bx + n)
-    go {._}{n} (_∷_ {m = bc} c (_∷_ {m = bx} x [])) xs
-      rewrite Lemma.#3 w bc bx n = c ∷ x ∷ xs
+      go : ∀ {bx n} → Bits 2 bx → Bits w n
+         → Bits (2 + w) (2 ^ w * bx + n)
+      go {._}{n} (_∷_ {m = bc} c (_∷_ {m = bx} x [])) xs
+        = subst (Bits (2 + w)) (Lemma.#3 w bc bx n) (c ∷ x ∷ xs)
+
+      open ≡-Reasoning
+      main-proof =
+        begin
+          2 ^ w * (bx + by + bc′) + bsum
+                                    ≡⟨ Lemma.#1 w bc′ bx by bsum ⟩
+          2 ^ w * (bx + by) + (2 ^ w * bc′ + bsum)
+                                    ≡⟨ cong (_+_ (2 ^ w * (bx + by))) prf ⟩
+          2 ^ w * (bx + by) + (bxs + bys + bc)
+                                    ≡⟨ Lemma.#2 w bc bx by bxs bys ⟩
+          2 ^ w * bx + bxs + (2 ^ w * by + bys) + bc ∎
