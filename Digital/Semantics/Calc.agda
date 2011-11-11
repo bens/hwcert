@@ -5,6 +5,7 @@ open import Data.Product
 open import Data.Sum
 open import Relation.Binary.PropositionalEquality
 
+open import Digital.Signature
 open import Digital.OpSpec
 open import Digital.Signals
 
@@ -20,8 +21,14 @@ module CalcSignals where
     cnand CI CO = CI
     cnand CI CI = CO
 
-    cbind : ∀ {x} {a : Set} → CBit x → (CBit x → a) → a
-    cbind x f = f x
+    cbind : ∀ {ni no}
+          → (ti : Ty ni) (ixi : IX⟦ ti ⟧)
+          → (to : Ty no) (ixo : IX⟦ to ⟧)
+          → T⟦ CBit ∣ ti ∶ ixi ⟧
+          → S⟦ CBit ∣ ti ∶ ixi ↦ to ∶ ixo ⟧
+          → T⟦ CBit ∣ to ∶ ixo ⟧
+    cbind _ _ _ _ x f = f x
+
 
     cbounded : ∀ {n} → CBit n → n ≡ 0 ⊎ n ≡ 1
     cbounded CO = inj₁ refl
