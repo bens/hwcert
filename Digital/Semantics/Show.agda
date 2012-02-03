@@ -76,8 +76,7 @@ private
   genVars  bit     = nextI >>= λ i → return $ var z≤n ("b" ++ ℕ-show i)
   genVars (bits 0) = return []
   genVars (bits (suc w)) =
-    let open Signals signals
-        lemma = cong (flip _+_ 0) $ *-comm (2 ^ w) 0
+    let lemma = cong (flip _+_ 0) $ *-comm (2 ^ w) 0
     in genVars (bits w) >>= λ vs →
        nextI            >>= λ i →
        return $ subst (Bits Var (suc w)) lemma
