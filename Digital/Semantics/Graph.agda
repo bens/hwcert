@@ -12,6 +12,8 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂; uncurry)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
 open import Function using (_∘_; _$_)
+open import Relation.Binary
+  using () renaming (StrictTotalOrder to STO)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl)
 
@@ -20,7 +22,7 @@ open import Digital.Signals
 open import Digital.Signature
 
 private
-  open Data.AVL ℕ-STO (λ _ → List ℕ)
+  open Data.AVL (λ _ → List ℕ) (STO.isStrictTotalOrder ℕ-STO)
 
   tree-union : Tree → Tree → Tree
   tree-union x = foldr f x ∘ toList
@@ -28,7 +30,7 @@ private
     f : (ℕ × List ℕ) → Tree → Tree
     f (k , v) t =
       insert k (maybe {B = λ _ → List ℕ}
-                         (_++_ v ∘ proj₁ ∘ proj₂)
+                         (_++_ v)
                          v (lookup k t))
                 t
 
