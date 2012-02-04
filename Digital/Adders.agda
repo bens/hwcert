@@ -36,7 +36,7 @@ module HalfAdder
   add : ∀ {m n} → Bit m → Bit n → Bits 2 (m + n)
   add {m}{n} x y =
     subst (Bits 2) (p x y) $
-      bind (bit t+ bit) _ (bits 2) _ (x , y) impl
+      bind (bit , bit) _ (bits 2) _ (x , y) impl
     where
     p : ∀ {m n} → Bit m → Bit n → implSpec m n ≡ m + n
     p x y with bounded x | bounded y
@@ -69,7 +69,7 @@ module FullAdder
   add : ∀ {m n o} → Bit m → Bit n → Bit o → Bits 2 (m + n + o)
   add {m}{n}{o} x y z =
     subst (Bits 2) (p x y z) $
-      bind (bit t+ bit t+ bit) _ (bits 2) _ (x , y , z) impl
+      bind (bit , bit , bit) _ (bits 2) _ (x , y , z) impl
     where
     p : ∀ {m n o} → Bit m → Bit n → Bit o → implSpec m n o ≡ m + n + o
     p x y z with bounded x | bounded y | bounded z

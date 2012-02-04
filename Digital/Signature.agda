@@ -8,26 +8,26 @@ open import Data.Vec
 
 open import Digital.Bits
 
-infixr 4 _t+_
+infixr 4 _,_
 data Ty : (nArgs : ℕ) → Set where
   bit  : Ty 1
   bits : (w : ℕ) → Ty 1
-  _t+_  : ∀ {m n} → (x : Ty m) → (y : Ty n) → Ty (m + n)
+  _,_  : ∀ {m n} → (x : Ty m) → (y : Ty n) → Ty (m + n)
 
 IX⟦_⟧ : ∀ {n} → Ty n → Set
 IX⟦ bit    ⟧ = ℕ
 IX⟦ bits w ⟧ = ℕ
-IX⟦ x t+ y ⟧ = IX⟦ x ⟧ × IX⟦ y ⟧
+IX⟦ x , y ⟧ = IX⟦ x ⟧ × IX⟦ y ⟧
 
 T⟦_∣_∶_⟧ : ∀ {n} → (Bit  : ℕ → Set) → (ty : Ty n) → IX⟦ ty ⟧ → Set
-T⟦ Bit ∣ bit    ∶ n ⟧         = Bit n
-T⟦ Bit ∣ bits w ∶ n ⟧         = Bits Bit w n
-T⟦ Bit ∣ x t+ y ∶ (ix , iy) ⟧ = T⟦ Bit ∣ x ∶ ix ⟧ × T⟦ Bit ∣ y ∶ iy ⟧
+T⟦ Bit ∣ bit    ∶ n ⟧       = Bit n
+T⟦ Bit ∣ bits w ∶ n ⟧       = Bits Bit w n
+T⟦ Bit ∣ x , y  ∶ ix , iy ⟧ = T⟦ Bit ∣ x ∶ ix ⟧ × T⟦ Bit ∣ y ∶ iy ⟧
 
 ixZero : ∀ {n} → (ty : Ty n) → IX⟦ ty ⟧
 ixZero  bit     = 0
 ixZero (bits w) = 0
-ixZero (x t+ y) = ixZero x , ixZero y
+ixZero (x , y) = ixZero x , ixZero y
 
 data Sig : ℕ → ℕ → Set where
   _∶_↦_∶_ : ∀ {bi bo}

@@ -109,9 +109,9 @@ private
           ixo≤1 = proj₁ $ (run >>= return ∘ proj₁) $ st 0 empty
   gbind bit ixi (bits 0) ixo (node ixi≤1 x) f = {!!}
   gbind bit ixi (bits (suc n)) ixo x f = {!!}
-  gbind bit ixi (x t+ y) (ixo₁ , ixo₂) (node ixi≤1 m) f = {!!} , {!!}
+  gbind bit ixi (x , y) (ixo₁ , ixo₂) (node ixi≤1 m) f = {!!} , {!!}
   gbind (bits w) ixi to ixo x f = {!!}
-  gbind (x t+ y) (ixi₁ , ixi₂) to ixo x' f = {!!}
+  gbind (x , y) (ixi₁ , ixi₂) to ixo x' f = {!!}
 
   gbounded : ∀ {n} → Node n → n ≡ 0 ⊎ n ≡ 1
   gbounded (node      z≤n  _) = inj₁ refl
@@ -130,7 +130,7 @@ private
   genVars  bit = getNext >>= λ i → return $ node z≤n (return i)
   genVars (bits zero) = return []
   genVars (bits (suc w)) = {!!}
-  genVars (x t+ y) =
+  genVars (x , y) =
     genVars x >>= λ xv →
     genVars y >>= λ yv →
     return (xv , yv)
@@ -144,7 +144,7 @@ private
   ... | nx = nx >>= λ n → return tt
   graphT (bits w) x =
     {!!}
-  graphT (tx t+ ty) (x , y) =
+  graphT (tx , ty) (x , y) =
     graphT tx x >>= λ gx →
     graphT ty y >>= λ gy →
     return tt
@@ -167,9 +167,9 @@ private
       ≡ (0 , []) ∷ (1 , 0 ∷ 0 ∷ []) ∷ []
   ex₀ = refl
 
-  ex₁ : graph bit (bit t+ bit) (λ i → defNot i , defNot i)
+  ex₁ : graph bit (bit , bit) (λ i → defNot i , defNot i)
               (λ s x → let open SigOps (defaultSigOps s)
-                       in bind bit _ (bit t+ bit) _ x
+                       in bind bit _ (bit , bit) _ x
                           (λ o → o nand o , o nand o))
       ≡ (0 , []) ∷ (1 , 0 ∷ 0 ∷ []) ∷ (2 , 0 ∷ 0 ∷ []) ∷ []
   ex₁ = {!!}

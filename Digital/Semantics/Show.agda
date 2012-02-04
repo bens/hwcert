@@ -65,9 +65,9 @@ private
     ... | false = go (ss ++ ":" ++ showVar b) bs
 
   showT : ∀ {n} → (ty : Ty n) {ix : IX⟦ ty ⟧} → T⟦ Var ∣ ty ∶ ix ⟧ → String
-  showT  bit x           = showVar x
-  showT (bits w) x       = showBits x
-  showT (t t+ u) (x , y) = showT t x ++ ", " ++ showT u y
+  showT  bit x          = showVar x
+  showT (bits w) x      = showBits x
+  showT (t , u) (x , y) = showT t x ++ ", " ++ showT u y
 
   nextI : State ℕ ℕ
   nextI = get >>= λ i → put (1 + i) >> return i
@@ -81,7 +81,7 @@ private
        nextI            >>= λ i →
        return $ subst (Bits Var (suc w)) lemma
                       (var z≤n ("bs" ++ ℕ-show i) ∷ vs)
-  genVars (x t+ y) =
+  genVars (x , y) =
     genVars x >>= λ tx → genVars y >>= λ ty → return (tx , ty)
 
 show : ∀ {ni no}

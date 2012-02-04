@@ -23,13 +23,13 @@ circuit : ∀ {S : ℕ → Set} (s : Signals S)
         → Bits S 2 (add m,n)
 circuit s = uncurry $ HalfAdder.add s (defaultSigOps s)
 
-test : show (bit t+ bit) (bits 2) add circuit
+test : show (bit , bit) (bits 2) add circuit
        ≡ "((b0 nand b1) nand (b0 nand b1)):" ++
          "((b0 nand (b0 nand b1)) nand (b1 nand (b0 nand b1)))"
 test = refl
 
 main′ : IO ⊤
-main′ = putStrLn $ show (bit t+ bit) (bits 2) add circuit
+main′ = putStrLn $ show (bit , bit) (bits 2) add circuit
 
 main : PrimIO ⊤
 main = run main′

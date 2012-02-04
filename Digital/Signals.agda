@@ -36,7 +36,7 @@ module Utilities {S : ℕ → Set} (signals : Signals S) where
   bind1-n {w} = bind bit _ (bits w) _
 
   bind2-1 : ∀ {m n o} → S m → S n → (S m → S n → S o) → S o
-  bind2-1 x y = bind (bit t+ bit) _ bit _ (x , y) ∘ uncurry
+  bind2-1 x y = bind (bit , bit) _ bit _ (x , y) ∘ uncurry
 
 record SigOps {S : ℕ → Set} (signals : Signals S) : Set1 where
   open Signals signals
