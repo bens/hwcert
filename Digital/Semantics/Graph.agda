@@ -3,7 +3,7 @@ module Digital.Semantics.Graph where
 open import Category.Monad.State
   using (State; module RawIMonadState; StateMonadState)
 import Data.AVL
-open import Data.List    using (List; _∷_; []; _++_; foldr)
+open import Data.List    using (List; _∷_; []; [_]; _++_; foldr)
 open import Data.Maybe   using (maybe)
 open import Data.Nat     using (ℕ; suc; zero; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties
@@ -37,14 +37,14 @@ private
 
   tree-ex₀ =
     fromList ((0 , []) ∷
-              (1 , (0 ∷ [])) ∷
-              (2 , (0 ∷ [])) ∷
+              (1 , [ 0 ]) ∷
+              (2 , [ 0 ]) ∷
               [])
 
   tree-ex₁ =
     fromList ((0 , []) ∷
-              (1 , (0 ∷ [])) ∷
-              (2 , (1 ∷ [])) ∷
+              (1 , [ 0 ]) ∷
+              (2 , [ 1 ]) ∷
               [])
 
   tree-ex₂ : tree-union tree-ex₀ tree-ex₁ ≡
@@ -83,7 +83,7 @@ private
   x ==> y = modify f >> return tt
     where
     f : St → St
-    f (st n t) = st n $ tree-union (singleton x (y ∷ [])) t
+    f (st n t) = st n $ tree-union (singleton x [ y ]) t
 
   gnand : ∀ {m n} → Node m → Node n → Node (m b-nand n)
   gnand (node m≤1 x) (node n≤1 y) =
