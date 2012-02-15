@@ -93,11 +93,11 @@ data Bit : ℕ → Set where
 example₀ : Bit 0
 example₀ = I nand I
 
-_and_ : ∀ {m n} → Bit m → Bit n → Bit (m b-and n)
+_and_ : ∀ {m n} → Bit m → Bit n → Bit (m and-spec n)
 _and_ {m}{n} x y rewrite sym (rewriteAnd m n) =
   (x nand y) nand (x nand y)
 
-_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m b-xor n)
+_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m xor-spec n)
 _xor_ {m}{n} x y rewrite sym (rewriteXor m n) =
   (x nand (x nand y)) nand (y nand (x nand y))
 
@@ -110,14 +110,6 @@ bounded (_nand_ {.0}{.0} x y) | inj₁ refl | inj₁ refl = inj₂ refl
 bounded (_nand_ {.0}{.1} x y) | inj₁ refl | inj₂ refl = inj₂ refl
 bounded (_nand_ {.1}{.0} x y) | inj₂ refl | inj₁ refl = inj₂ refl
 bounded (_nand_ {.1}{.1} x y) | inj₂ refl | inj₂ refl = inj₁ refl
-
-_and_ : ∀ {m n} → Bit m → Bit n → Bit (m and-spec n)
-_and_ {m}{n} x y rewrite sym (rewriteAnd m n) =
-  (x nand y) nand (x nand y)
-
-_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m xor-spec n)
-_xor_ {m}{n} x y rewrite sym (rewriteXor m n) =
-  (x nand (x nand y)) nand (y nand (x nand y))
 
 example₁ : Bit 1
 example₁ = I and I
