@@ -1,26 +1,30 @@
 module Digital.Semantics.Graph where
 
+open import Algebra using (module CommutativeSemiring)
 open import Category.Monad.State
   using (State; module RawIMonadState; StateMonadState)
 import Data.AVL
 open import Data.List    using (List; _∷_; []; [_]; _++_; foldr)
 open import Data.Maybe   using (maybe)
-open import Data.Nat     using (ℕ; suc; zero; _≤_; z≤n; s≤s)
+open import Data.Nat     using (ℕ; suc; zero; _+_; _*_; _≤_; z≤n; s≤s)
 open import Data.Nat.Properties
-  using () renaming (strictTotalOrder to ℕ-STO)
+  using (commutativeSemiring) renaming (strictTotalOrder to ℕ-STO)
 open import Data.Product using (_×_; _,_; proj₁; proj₂; uncurry)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (⊤; tt)
-open import Function using (_∘_; _$_)
+open import Function using (_∘_; _$_; flip)
 open import Relation.Binary
   using () renaming (StrictTotalOrder to STO)
 open import Relation.Binary.PropositionalEquality
-  using (_≡_; refl)
+  using (_≡_; cong; refl; subst)
 
 open import Digital.Bits
 open import Digital.OpSpec
 open import Digital.Signals
 open import Digital.Signature
+open import Digital.NatExtra as ℕ-E using (_^_)
+
+open CommutativeSemiring commutativeSemiring using (+-comm; *-comm)
 
 private
   open Data.AVL (λ _ → List ℕ) (STO.isStrictTotalOrder ℕ-STO)
@@ -126,10 +130,20 @@ private
     ; bounded = gbounded
     }
 
+  genVarsBit : State St T⟦ Node ∣ bit ∶ ixZero bit ⟧
+  genVarsBit = getNext >>= (λ i → return $ node z≤n (return i))
+
+  genVarsBits : ∀ w → State St T⟦ Node ∣ bits w ∶ ixZero (bits w) ⟧
+  genVarsBits zero = return []
+  genVarsBits (suc w) =
+    let lemma = cong (flip _+_ 0) $ *-comm (2 ^ w) 0
+    in genVarsBit    >>= λ i →
+       genVarsBits w >>= λ is →
+       return (subst (Bits Node (suc w)) lemma (i ∷ is))
+
   genVars : ∀ {n} (ty : Ty n) → State St T⟦ Node ∣ ty ∶ ixZero ty ⟧
-  genVars  bit = getNext >>= λ i → return $ node z≤n (return i)
-  genVars (bits zero) = return []
-  genVars (bits (suc w)) = {!!}
+  genVars  bit = genVarsBit
+  genVars (bits w) = genVarsBits w
   genVars (x , y) =
     genVars x >>= λ xv →
     genVars y >>= λ yv →
@@ -140,8 +154,8 @@ private
          → {ix : IX⟦ ty ⟧}
          → T⟦ Node ∣ ty ∶ ix ⟧
          → State St ⊤
-  graphT bit x with nodeAction x
-  ... | nx = nx >>= λ n → return tt
+  graphT bit x =
+    nodeAction x >>= λ n → return tt
   graphT (bits w) x =
     {!!}
   graphT (tx , ty) (x , y) =
