@@ -154,14 +154,10 @@ private
          → {ix : IX⟦ ty ⟧}
          → T⟦ Node ∣ ty ∶ ix ⟧
          → State St ⊤
-  graphT bit x =
-    nodeAction x >>= λ n → return tt
-  graphT (bits w) x =
-    {!!}
+  graphT  bit     x = nodeAction x >> return tt
+  graphT (bits w) x = {!!}
   graphT (tx , ty) (x , y) =
-    graphT tx x >>= λ gx →
-    graphT ty y >>= λ gy →
-    return tt
+    graphT tx x >> graphT ty y >> return tt
 
 graph : ∀ {ni no}
       → (ti : Ty ni) (to : Ty no)
