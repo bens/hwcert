@@ -111,25 +111,51 @@ bounded (_nand_ {.0}{.1} x y) | inj₁ refl | inj₂ refl = inj₂ refl
 bounded (_nand_ {.1}{.0} x y) | inj₂ refl | inj₁ refl = inj₂ refl
 bounded (_nand_ {.1}{.1} x y) | inj₂ refl | inj₂ refl = inj₁ refl
 
-_and_ : ∀ {m n} → Bit m → Bit n → Bit (m b-and n)
+_and_ : ∀ {m n} → Bit m → Bit n → Bit (m and-spec n)
 _and_ {m}{n} x y rewrite sym (rewriteAnd m n) =
   (x nand y) nand (x nand y)
 
-_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m b-xor n)
+_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m xor-spec n)
 _xor_ {m}{n} x y rewrite sym (rewriteXor m n) =
   (x nand (x nand y)) nand (y nand (x nand y))
+
+example₁ : Bit 1
+example₁ = I and I
+
+example₂ : Bit 0
+example₂ = I and O
+
+example₃ : Bit 1
+example₃ = I xor O
+
+
+
+
+
+
+
+-- Exponentiation
+infixr 8 _^_
+_^_ : ℕ → ℕ → ℕ
+x ^ 0 = 1
+x ^ (suc e) = x * (x ^ e)
+
+infixr 5 _∷_
 
 -- Collections of bits, indexed by their unsigned value.
 -- The last bit added is the MSB.
 data Bits : ℕ → ℕ → Set where
-  [] : Bits 0 0
-  _∷_ : ∀ {w m n} (b : Bit m) (bs : Bits w n)
-        → Bits (suc w) (2 ^ w * m + n)
+  []  : Bits 0 0
+  _∷_ : {w m n : ℕ} (b : Bit m) (bs : Bits w n)
+      → Bits (1 + w) (2 ^ w * m + n)
+
 
 -- Split off the MSB of a Bits collection.
-split1 : ∀ {w val}
-       → (xs : Bits (suc w) val)
-       → ∃₂ λ m n → Bit m × Bits w n × (2 ^ w * m + n ≡ val)
+split1 : {w n : ℕ}
+       → Bits (1 + w) n
+       → ∃₂ λ (a b : ℕ) → Bit a
+                        × Bits w b
+                        × (2 ^ w * a + b ≡ n)
 split1 (b ∷ bs) with bounded b
 split1 (b ∷ bs) | inj₁ refl = _ , _ , b , bs , refl
 split1 (b ∷ bs) | inj₂ refl = _ , _ , b , bs , refl
