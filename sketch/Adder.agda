@@ -1,3 +1,18 @@
+--
+-- Largely taken from
+--
+--   Constructing Correct Circuits: Verification of Functional Aspects
+--            of Hardware Specifications with Dependent Types
+--
+--             Edwin Brady, Kevin Hammond and James McKinna
+--
+-- http://www.cs.ru.nl/~james/RESEARCH/tfp2007.pdf
+--
+
+
+
+
+-- Boilerplate
 module Adder where
 
 open import Data.Nat            using (ℕ; suc; _+_; _*_)
@@ -8,20 +23,75 @@ open import Function            using (_$_)
 open import Relation.Binary.PropositionalEquality
   using (_≡_; refl; cong; subst; sym; module ≡-Reasoning)
 
-open import Digital.OpSpec
-  using (_b-nand_; _b-and_; rewriteAnd; _b-xor_; rewriteXor)
 
--- Exponentiation.
-infixr 8 _^_
-_^_ : ℕ → ℕ → ℕ
-x ^ 0 = 1
-x ^ (suc e) = x * (x ^ e)
+
+
+
+
+--
+-- Specifications of operations
+--
+
+module Specs where
+  _nand-spec_ : ℕ → ℕ → ℕ
+  _nand-spec_      0       0  = 1
+  _nand-spec_      0  (suc _) = 1
+  _nand-spec_ (suc _)      0  = 1
+  _nand-spec_ (suc _) (suc _) = 0
+
+
+  defAnd = λ (m n : ℕ) →
+           (m nand-spec n) nand-spec (m nand-spec n)
+
+  _and-spec_ : ℕ → ℕ → ℕ
+  _and-spec_      0       0  = 0
+  _and-spec_      0  (suc _) = 0
+  _and-spec_ (suc _)      0  = 0
+  _and-spec_ (suc _) (suc _) = 1
+
+  rewriteAnd : ∀ m n → defAnd m n ≡ m and-spec n
+  rewriteAnd      0       0  = refl
+  rewriteAnd      0  (suc _) = refl
+  rewriteAnd (suc _)      0  = refl
+  rewriteAnd (suc _) (suc _) = refl
+
+
+  defXor = λ (m n : ℕ) →
+             (m nand-spec (m nand-spec n)) nand-spec
+             (n nand-spec (m nand-spec n))
+
+  _xor-spec_ : ℕ → ℕ → ℕ
+  _xor-spec_      0       0  = 0
+  _xor-spec_      0  (suc _) = 1
+  _xor-spec_ (suc _)      0  = 1
+  _xor-spec_ (suc _) (suc _) = 0
+
+  rewriteXor : ∀ m n → defXor m n ≡ m xor-spec n
+  rewriteXor      0       0  = refl
+  rewriteXor      0  (suc _) = refl
+  rewriteXor (suc _)      0  = refl
+  rewriteXor (suc _) (suc _) = refl
+
+
+
+
+
+
+
+
+
+
+
+open Specs
 
 -- The indexed bit representation
 data Bit : ℕ → Set where
   O      : Bit 0
   I      : Bit 1
-  _nand_ : ∀ {m n} → Bit m → Bit n → Bit (m b-nand n)
+  _nand_ : ∀ {m n} → Bit m → Bit n → Bit (m nand-spec n)
+
+example₀ : Bit 0
+example₀ = I nand I
 
 _and_ : ∀ {m n} → Bit m → Bit n → Bit (m b-and n)
 _and_ {m}{n} x y rewrite sym (rewriteAnd m n) =
@@ -32,7 +102,7 @@ _xor_ {m}{n} x y rewrite sym (rewriteXor m n) =
   (x nand (x nand y)) nand (y nand (x nand y))
 
 -- Proof that all bits have index 0 or 1
-bounded : ∀ {n} → Bit n → n ≡ 0 ⊎ n ≡ 1
+bounded : {n : ℕ} → Bit n → n ≡ 0 ⊎ n ≡ 1
 bounded O = inj₁ refl
 bounded I = inj₂ refl
 bounded (x nand y) with bounded x | bounded y
@@ -41,70 +111,111 @@ bounded (_nand_ {.0}{.1} x y) | inj₁ refl | inj₂ refl = inj₂ refl
 bounded (_nand_ {.1}{.0} x y) | inj₂ refl | inj₁ refl = inj₂ refl
 bounded (_nand_ {.1}{.1} x y) | inj₂ refl | inj₂ refl = inj₁ refl
 
+_and_ : ∀ {m n} → Bit m → Bit n → Bit (m b-and n)
+_and_ {m}{n} x y rewrite sym (rewriteAnd m n) =
+  (x nand y) nand (x nand y)
+
+_xor_ : ∀ {m n} → Bit m → Bit n → Bit (m b-xor n)
+_xor_ {m}{n} x y rewrite sym (rewriteXor m n) =
+  (x nand (x nand y)) nand (y nand (x nand y))
+
 -- Collections of bits, indexed by their unsigned value.
 -- The last bit added is the MSB.
-infixr 5 _∷_
 data Bits : ℕ → ℕ → Set where
   [] : Bits 0 0
   _∷_ : ∀ {w m n} (b : Bit m) (bs : Bits w n)
-        → Bits (1 + w) (2 ^ w * m + n)
+        → Bits (suc w) (2 ^ w * m + n)
 
 -- Split off the MSB of a Bits collection.
 split1 : ∀ {w val}
-       → (xs : Bits (1 + w) val)
+       → (xs : Bits (suc w) val)
        → ∃₂ λ m n → Bit m × Bits w n × (2 ^ w * m + n ≡ val)
 split1 (b ∷ bs) with bounded b
 split1 (b ∷ bs) | inj₁ refl = _ , _ , b , bs , refl
 split1 (b ∷ bs) | inj₂ refl = _ , _ , b , bs , refl
 
 
+
+
+
+
+
+
+
+
 -- Add two bits together.
 module HalfAdder where
-  spec = λ (m n : ℕ)
-       → (m b-and n + (m b-and n + 0) + (m b-xor n + 0 + 0))
+  adder-spec : ℕ → ℕ → ℕ
+  adder-spec m n =
+    m and-spec n + (m and-spec n + 0) + (m xor-spec n + 0 + 0)
 
-  impl : ∀ {m n} → Bit m → Bit n → Bits 2 (spec m n)
-  impl x y = x and y ∷ x xor y ∷ []
+  implementation : {m n : ℕ}
+                 → Bit m → Bit n
+                 → Bits 2 (adder-spec m n)
+  implementation x y =
+    x and y ∷ x xor y ∷ []
 
-  add : ∀ {m n} → Bit m → Bit n → Bits 2 (m + n)
-  add {m}{n} x y = subst (Bits 2) (p x y) (impl x y)
-    where
-    p : ∀ {m n} → Bit m → Bit n → spec m n ≡ m + n
-    p x y with bounded x | bounded y
-    p x y | inj₁ refl | inj₁ refl = refl
-    p x y | inj₁ refl | inj₂ refl = refl
-    p x y | inj₂ refl | inj₁ refl = refl
-    p x y | inj₂ refl | inj₂ refl = refl
+  lemma : {m n : ℕ}
+        → Bit m → Bit n
+        → adder-spec m n ≡ m + n
+  lemma x y with bounded x | bounded y
+  ... | inj₁ refl | inj₁ refl = refl
+  ... | inj₁ refl | inj₂ refl = refl
+  ... | inj₂ refl | inj₁ refl = refl
+  ... | inj₂ refl | inj₂ refl = refl
+
+  add : {m n : ℕ} → Bit m → Bit n → Bits 2 (m + n)
+  add x y = subst (Bits 2) (lemma x y) (implementation x y)
+
+
+
+
+
+
 
 
 -- Add three bits together.
 module FullAdder where
-  spec = λ (m n o : ℕ)
-       → (2 * ((m b-xor n) b-nand o) b-nand (m b-nand n))
-       + (1 * (m b-xor n) b-xor o + 0)
+  adder-spec : ℕ → ℕ → ℕ → ℕ
+  adder-spec m n o =
+    (2 * ((m xor-spec n) nand-spec o) nand-spec (m nand-spec n)) +
+    (1 * (m xor-spec n) xor-spec o + 0)
 
-  impl : ∀ {m n o} → Bit m → Bit n → Bit o → Bits 2 (spec m n o)
-  impl x y z = (x⊕y nand z) nand (x nand y) ∷ x⊕y xor z ∷ []
+  implementation : {m n o : ℕ}
+                 → Bit m → Bit n → Bit o
+                 → Bits 2 (adder-spec m n o)
+  implementation x y z = (x⊕y nand z) nand (x nand y) ∷ x⊕y xor z ∷ []
     where x⊕y = x xor y
 
-  add : ∀ {m n o} → Bit m → Bit n → Bit o → Bits 2 (m + n + o)
-  add {m}{n}{o} x y z = subst (Bits 2) (p x y z) (impl x y z)
-    where
-    p : ∀ {m n o} → Bit m → Bit n → Bit o → spec m n o ≡ m + n + o
-    p x y z with bounded x | bounded y | bounded z
-    ... | inj₁ refl | inj₁ refl | inj₁ refl = refl
-    ... | inj₁ refl | inj₁ refl | inj₂ refl = refl
-    ... | inj₁ refl | inj₂ refl | inj₁ refl = refl
-    ... | inj₁ refl | inj₂ refl | inj₂ refl = refl
-    ... | inj₂ refl | inj₁ refl | inj₁ refl = refl
-    ... | inj₂ refl | inj₁ refl | inj₂ refl = refl
-    ... | inj₂ refl | inj₂ refl | inj₁ refl = refl
-    ... | inj₂ refl | inj₂ refl | inj₂ refl = refl
+  lemma : {m n o : ℕ}
+        → Bit m → Bit n → Bit o
+        → adder-spec m n o ≡ m + n + o
+  lemma x y z with bounded x | bounded y | bounded z
+  ... | inj₁ refl | inj₁ refl | inj₁ refl = refl
+  ... | inj₁ refl | inj₁ refl | inj₂ refl = refl
+  ... | inj₁ refl | inj₂ refl | inj₁ refl = refl
+  ... | inj₁ refl | inj₂ refl | inj₂ refl = refl
+  ... | inj₂ refl | inj₁ refl | inj₁ refl = refl
+  ... | inj₂ refl | inj₁ refl | inj₂ refl = refl
+  ... | inj₂ refl | inj₂ refl | inj₁ refl = refl
+  ... | inj₂ refl | inj₂ refl | inj₂ refl = refl
+
+  add : {m n o : ℕ} → Bit m → Bit n → Bit o → Bits 2 (m + n + o)
+  add x y z = subst (Bits 2) (lemma x y z) (implementation x y z)
+
+
+
+
+
+
+
 
 
 -- Add two n-bit numbers together.
 module RippleAdder where
   module Lemma (w : ℕ) where
+
+    -- Proof by reflection!
     open SemiringSolver using (solve; _:+_; _:*_; _:=_; con)
     2ʷ = 2 ^ w
 
@@ -137,6 +248,32 @@ module RippleAdder where
             refl 2ʷ bc bx val
 
 
+
+  open ≡-Reasoning
+
+  main-proof
+    : (w bx bxs by bys bc bc-sum bsum : ℕ)
+    → let 2ʷ = 2 ^ w in
+      2ʷ * bc-sum + bsum ≡ bxs + bys + bc
+    → 2ʷ * (bx + by + bc-sum) + bsum ≡ 2ʷ * bx + bxs + (2ʷ * by + bys) + bc
+  main-proof w bx bxs by bys bc bc-sum bsum lemma =
+    let 2ʷ = 2 ^ w in
+    begin
+      2ʷ * (bx + by + bc-sum) + bsum
+                ≡⟨ Lemma.#1 w bc-sum bx by bsum ⟩
+      2ʷ * (bx + by) + (2ʷ * bc-sum + bsum)
+                ≡⟨ cong (_+_ (2ʷ * (bx + by))) lemma ⟩
+      2ʷ * (bx + by) + (bxs + bys + bc)
+                ≡⟨ Lemma.#2 w bc bx by bxs bys ⟩
+      2ʷ * bx + bxs + (2ʷ * by + bys) + bc ∎
+
+   -- cong : {A B : Set}
+   --      → (f : A → B)
+   --      → {x y : A}
+   --      → x ≡ y → f x ≡ f y
+
+
+
   add : {w m n : ℕ}
       → Bits w m → Bits w n
       → {c : ℕ} → Bit c
@@ -144,25 +281,22 @@ module RippleAdder where
   add {.0} [] [] c with bounded c
   add {.0} [] [] c | inj₁ refl = c ∷ []
   add {.0} [] [] c | inj₂ refl = c ∷ []
-  add {suc w} (_∷_ {.w} x xs) (y ∷ ys) c with split1 (add xs ys c)
-  add {suc w} (_∷_ {.w} {bx} {bxs} x xs) (_∷_ {.w} {by} {bys} y ys) {bc} c
-    | bc′ , bsum , c′ , sum , prf
-    = subst (Bits (2 + w)) main-proof $
-        go (FullAdder.add x y c′) sum
+  add {suc w} (x ∷ xs) (y ∷ ys) c with split1 (add xs ys c)
+  add {suc w} (_∷_ {m = bx} {n = bxs} x xs)
+              (_∷_ {m = by} {n = bys} y ys)
+              {bc} c
+            | bc-sum , bsum , c′ , sum , prf
+    -- subst has a type similar to
+    -- {A : Set} (P : A → Set) {x y : A} → x ≡ y → P x → P y
+    = subst (Bits (2 + w))
+            (main-proof w bx bxs by bys bc bc-sum bsum prf)
+            (collect-bits (FullAdder.add x y c′) sum)
     where
-      2ʷ = 2 ^ w
-      go : ∀ {bx n} → Bits 2 bx → Bits w n
-         → Bits (2 + w) (2ʷ * bx + n)
-      go {._}{n} (_∷_ {m = bc} c (_∷_ {m = bx} x [])) xs
-        = subst (Bits (2 + w)) (Lemma.#3 w bc bx n) (c ∷ x ∷ xs)
-
-      open ≡-Reasoning
-      main-proof =
-        begin
-          2ʷ * (bx + by + bc′) + bsum
-                                    ≡⟨ Lemma.#1 w bc′ bx by bsum ⟩
-          2ʷ * (bx + by) + (2ʷ * bc′ + bsum)
-                                    ≡⟨ cong (_+_ (2ʷ * (bx + by))) prf ⟩
-          2ʷ * (bx + by) + (bxs + bys + bc)
-                                    ≡⟨ Lemma.#2 w bc bx by bxs bys ⟩
-          2ʷ * bx + bxs + (2ʷ * by + bys) + bc ∎
+      collect-bits : {bx : ℕ} → Bits 2 bx
+                   → {n  : ℕ} → Bits w n
+                   → Bits (2 + w) (2 ^ w * bx + n)
+      collect-bits (_∷_ {m = bc} c
+                        (_∷_ {m = bx}
+                             x []))
+                   {n} xs =
+        subst (Bits (2 + w)) (Lemma.#3 w bc bx n) (c ∷ x ∷ xs)
